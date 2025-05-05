@@ -1,116 +1,130 @@
-# Windows Benchmark Suite - Project Overview
+# Windows Benchmark Toolkit
 
-This suite automates the downloading, installation, running, and parsing
-of benchmark tools on Windows, enabling both one-off and long-term
-performance tracking. It is script-driven, modular, and uses JSON
-configuration files to define tool behaviors.
+This suite automates the downloading, installation, running, and
+parsing of benchmark tools on Windows, enabling both one-off and
+long-term performance tracking. It is script-driven, modular, and uses
+JSON configuration files to define tool behaviors.
 
 It should work on any Windows machine. The current test system is a
-Beelink EQR-6 with Ryzen 9 6900HX and Radeon Graphics.
+Beelink EQR-6 with Ryzen 9 6900HX and Radeon Graphics.  A simple,
+modular benchmarking framework for Windows systems.
 
-## Goal
+## Purpose
 
-Build a PowerShell- and Python-driven system to benchmark and analyze:
+This project aims to:
 
-* CPU performance
-* Disk performance
-* System-wide compute (e.g., Geekbench, PyTorch)
+- Track performance across software/hardware changes (e.g., drivers,
+  software install, OS updates).  
+- Collect reproducible benchmark results in wide CSV format.
+- Support modular tools: you can plug in new benchmarks easily.
+- Emphasize automation without administrative privileges or bloat.
 
-## Requirements
+Originally designed for the Beelink EQr6 (AMD Ryzen 9 6900HX), but
+adaptable to any Windows environment with PowerShell and Python.
 
-* Windows 11
-* PowerShell 5 (default on Windows 11)
-* WinPython Slim, installed at `$WINPYROOT`
-* Python executable path stored in `$WINPYTHON`
+---
 
-## Directory Structure
+## Setup and Requirements
 
-All paths are relative to the root `benchmarks/` directory:
+- Windows 10/11
+- PowerShell 5 (no elevation needed)
+- Python 3 (currently using [WinPython](https://winpython.github.io/))
+- Environment variables:
+  - `WINPYROOT` — root of WinPython installation 
+       (e.g., `C:\winpy`)
+  - `WINPYTHON` — full path to Python executable 
+       (e.g., `c:/Winpy/Winpython64-3.12.9.0slim/WPy64-31290/python/`)
+
+
+---
+
+## Project Directory Structure
 
 ```
 README.md            # This README.md file, a project readme
-archive/             # Archived raw logs and processed results files
-configs/             # Config JSONs (benchmark definitions)
+run-benchmark.ps1    # Top level script to run the suite
+config.json          # the json configuration file definining each benchmark tool
+scripts/             # PowerShell and Python scripts
+tools/               # Installed benchmark tools
 logs/                # Logs from running of each tool
 pytorch/             # PyTorch benchmark output and logs
 results/             # Processed .log files (.results) and csvs
-scripts/             # PowerShell and Python scripts
 summary/             # CSVs and human-readable summaries
-tools/               # Installed benchmark tools
+archive/             # Archived raw logs and processed results files
 ```
 
-### Environment Variables
+---
 
-* `BENCHMARKS` = path to benchmark root directory
-* `WINPYROOT` = Root of WinPython installation
-* `WINPYTHON` = Full path to Python executable
+## PowerShell Script Overview
 
-## Configuration - benchmarks\configs
+| Script                         | Purpose                                                                 |
+|--------------------------------|-------------------------------------------------------------------------|
+| `benchmark-tool-downloads.ps1` | Downloads benchmark tools listed in `config.json`.                      |
+| `benchmark-tool-install.ps1`   | Installs tools or shows manual instructions (e.g., for Cinebench).      |
+| `benchmark-tool-cleanup.ps1`   | Deletes downloaded and installed files.                                 |
 
-| File                            | Purpose                                      |
-| `benchmarks-config.json`          | Configuration for all tools                  |
+---
 
+## Benchmark Configuration (config.json)
 
-## Scripts - benchmarks\scripts
+Defines metadata for each benchmark tool, including how to download, install, and run them.
 
-| Script                            | Purpose                                      |
-| --------------------------------- | -------------------------------------------- |
-| `tool-download.ps1`    | Downloads benchmark tools                    |
-| `tool-install.ps1`                    | Run install commands (may require admin rights) |
-| `tool-cleanup.ps1`                    | uninstalls tools and deletes them including downloaded zips, exes, etc. |
-| `run-benchmarks.ps1`                        | Execute tools, rename logs with timestamps      |
-| `run-benchmarks-pytorch.py`            | Custom PyTorch benchmarking script           |
-| `process-benchmarks-pytorch.py`                | Parses PyTorch benchmark output into metrics |
-| `cleanup-results.ps1` | Cleanup and archiving of results             |
-
-## Scripts To Write
-
-| Script                                      | Purpose                                         |
-| ------------------------------------------- | ----------------------------------------------- |
-| `process-benchmarks.ps1` | Parse `.log` outputs to wide-format CSV         |
-| `analyze-benchmarks.ps1` | Analyze trends |
-
-Scripts include CLI usage samples, clear structure, and user pauses
-between phases. All scripts except cleanup scripts are safe to rerun (idempotent).
-
-## Python Notes
-
-* WinPython "slim" is installed at `$WINPYROOT`. It includes many useful
-  packages but you must install PyTorch explicitly.
-* Scripts assume Python is available via `$WINPYTHON`.
-
-## Script Conventions
-
-Each PowerShell or Python script should:
-
-* Begin with a comment block describing purpose and CLI usage
-* Python scripts should include a shebang (even on Windows, for documentation)
-* Use logical phases: download, install, run, parse, cleanup
-* Be idempotent (safe to re-run without reinitialization)
-* Wrap lines and comments at 72 characters where practical
-* Named using hyphens and not underscores
-
-## Adding New Tools
-
-To add a new benchmark tool:
-
-1. Add an entry to `configs/benchmarks-config.json`
-2. Include download URL, install command, run command, and parser info
-3. Mark the tool as `"enabled": true`
-4. Re-run the scripts—no core code changes required
-
-## Tool Configuration
-
-Each entry in `benchmarks-config.json` contains:
-
-* `long_name`, `short_name`, `description`
-* `function`: benchmark purpose (e.g. CPU, disk, ML)
-* `download_url`, `install_dir`, `install_command`
+* `long_name`, `short_name`
+* `description`
+* `function or category`: benchmark purpose (e.g. CPU, disk, ML)
+* `download_url`, `download_instructions`
+* `install_dir`, `install_command`, `install instructions`
 * `runner`: includes command, log file pattern, requires\_admin
 * `parser`: includes method, regex patterns
 * `custom_parser`: Python script to use, if any
-* `requirements`: informational field for user to check
+* `requirements`: informational field containing dependencies
 * `enabled`: whether the tool is active
+
+### Supported Fields
+
+| Field            | Description                                                              |
+|------------------|--------------------------------------------------------------------------|
+| `tool`           | Unique tool name (used in script matching).                             |
+| `url`            | HTTP(s) source for download.                                             |
+| `destination`    | Path where the file should be stored.                                    |
+| `manual_download`| If `true`, will instruct the user to download manually (e.g., Cinebench).|
+| `install_command`| Human-readable summary of what installation entails.                     |
+| `requirements`   | Dependencies required for the benchmark to function (e.g., Python).      |
+
+---
+
+## Results Format
+
+All benchmark results should be written as **wide CSV** under `benchmarks/results/`.
+
+- Each **row** = one run of a tool.
+- Each **column** = one metric or system detail (e.g., CPU, FPS, time).
+- Timestamp and tool name included in each row.
+
+---
+
+## Manual Download Requirements
+
+Some tools cannot be downloaded programmatically due to licensing or
+authentication (e.g., Cinebench). If download_instructions is a string,
+it will be presented to the user.
+
+## Manual Installation Requirements
+
+Some tools may require manual installation
+
+For these, if install instructions is a string, it will be presented
+to the user
+
+---
+
+## Adding a New Benchmark Tool
+
+To add a new benchmark:
+
+1. Add a new entry to `config.json`.
+
+---
 
 ## Supported Benchmarks
 
@@ -131,6 +145,8 @@ Each entry in `benchmarks-config.json` contains:
 
 ## Design Principles
 
+* Steps are separated into separate scripts that strive for
+  idempotency
 * Execution and parsing are separated
 * Raw logs are archived after parsing
 * Scripts fail gracefully and verify success
@@ -144,10 +160,3 @@ Each entry in `benchmarks-config.json` contains:
 * Guidelines, Requirements, Derived Requirements, Dependencies
   should be collected in the README under sections
   Guidelines, Requirements, Derived Requirements, Dependencies
-
----
-
-## TODO
-
-* Expand PyTorch benchmark support and automation
-* Implement trend visualization and summaries
