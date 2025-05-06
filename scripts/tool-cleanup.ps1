@@ -144,4 +144,21 @@ foreach ($ToolName in $ToolsToProcess) {
     
     # Remove downloads if not skipped
     if (-not $InstallsOnly) {
-        Remove-Downloads -
+        Remove-Downloads -ToolName $ToolName
+    }
+    
+    # Uninstall the tool if not skipped
+    if (-not $DownloadsOnly) {
+        Uninstall-Tool -ToolName $ToolName -ToolConfig $ToolConfig
+    }
+}
+
+# Check if download directory is empty and remove it if it is
+if (-not $InstallsOnly) {
+    if ((Test-Path -Path $DownloadDir) -and ((Get-ChildItem -Path $DownloadDir -Force | Measure-Object).Count -eq 0)) {
+        Remove-Item -Path $DownloadDir -Force
+        Write-Host "`nRemoved empty download directory: $DownloadDir" -ForegroundColor Green
+    }
+}
+
+Write-Host "`nCleanup complete." -ForegroundColor Green

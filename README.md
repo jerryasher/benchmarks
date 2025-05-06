@@ -31,7 +31,7 @@ When modifying files in this project, please follow these principles:
 
 - UTF-8 will be used throughout
 
-- Files should have a final linefeed
+- All files should have a final linefeed
 
 ## Purpose
 
