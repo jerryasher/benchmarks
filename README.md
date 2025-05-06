@@ -33,6 +33,9 @@ When modifying files in this project, please follow these principles:
 
 - All files should have a final linefeed
 
+- Ask if a pester test or similar test can be written for the current
+  script.
+
 ## Purpose
 
 This project aims to:
@@ -68,6 +71,7 @@ run-benchmark.ps1    # Top level script to run the suite
 config.json          # the json configuration file definining each benchmark tool
 scripts/             # PowerShell and Python scripts
 tools/               # Installed benchmark tools
+tests/               # Pester tests (and any others)
 logs/                # Logs from running of each tool
 pytorch/             # PyTorch benchmark output and logs
 results/             # Processed .log files (.results) and csvs
@@ -201,6 +205,17 @@ All benchmark results should be written as **wide CSV** under
 - Each **column** = one metric or system detail (e.g., CPU, FPS, time).
 - Timestamp and tool name included in each row.
 
+## Tests
+
++ Pester should be installed by
++ Pester tests can be run from the top level directory by
+
+    Invoke-Pester -Path .\tests\Tests.ps1
+
++ PyTests should be installed by
+
++ Pytests can be run by
+
 # Currently Supported Benchmarks
 
 * CPU-Z
@@ -218,6 +233,8 @@ All benchmark results should be written as **wide CSV** under
 * Scripts fail gracefully and verify success
 * Future CLI summaries will visualize trends
 * Parsers may use regex or custom Python
+* Powershell tests can use pester (or similar)
+* Python tests can use pytest (or similar)
 
 # Documentation
 

@@ -28,6 +28,11 @@ param(
     [string[]]$Tools
 )
 
+Write-Host "ConfigFile: $ConfigFile"
+Write-Host "DownloadDir: $DownloadDir"
+Write-Host "Force: $Force"
+Write-Host "Tools: $Tools"
+
 # Create downloads directory if it doesn't exist
 if (-not (Test-Path -Path $DownloadDir)) {
     New-Item -Path $DownloadDir -ItemType Directory | Out-Null
@@ -35,11 +40,17 @@ if (-not (Test-Path -Path $DownloadDir)) {
 }
 
 # Load configuration
+Write-Host "Attempting to load config from: $ConfigFile"
+Write-Host "Current directory: $(Get-Location)"
+Write-Host "Config file exists: $(Test-Path -Path $ConfigFile)"
 try {
     $Config = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
     Write-Host "Configuration loaded from $ConfigFile"
 } catch {
-    Write-Error "Failed to load configuration from $ConfigFile: $_"
+    Write-Host "Caught exception: $($_.GetType().FullName)"
+    Write-Host "Exception message: $($_.Exception.Message)"
+    # Write-Error "Failed to load configuration from ${ConfigFile}: $_"
+    Write-Error "Failed to load configuration from $ConfigFile: $($_.Exception.Message)
     exit 1
 }
 
@@ -163,3 +174,4 @@ foreach ($ToolName in $ToolsToProcess) {
 }
 
 Write-Host "`nDownload process completed!" -ForegroundColor Green
+
