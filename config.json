@@ -4,10 +4,18 @@
     "short_name": "CPUZ",
     "description": "CPU performance benchmark measuring single and multi-thread scores.",
     "function": "CPU performance",
-    "download_url": "https://download.cpuid.com/cpu-z/cpu-z_2.09-en.zip",
-    "install_dir": "tools/cpu-z",
-    "install_command": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
-    "manual_install": false,
+    "download": {
+      "download_url": "https://download.cpuid.com/cpu-z/cpu-z_2.09-en.zip",
+      "manual_download": false,
+      "download_instructions": null
+    },
+    "install": {
+      "install_dir": "tools/cpu-z",
+      "install_command": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
+      "manual_install": false,
+      "install_instructions": null,
+      "uninstall_command": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
+    },
     "requirements": null,
     "runner": {
       "command": "\"{install_dir}\\cpuz.exe\" -bench -txt={log_file}",
@@ -29,10 +37,18 @@
     "short_name": "CB23",
     "description": "Renders complex 3D scenes to benchmark CPU multi- and single-core performance.",
     "function": "CPU performance (rendering)",
-    "download_url": "https://www.maxon.net/en/downloads/cinebench-r23-downloads",
-    "install_dir": "tools/cinebench",
-    "install_command": "Please download Cinebench manually from https://www.maxon.net/en/downloads/cinebench-r23-downloads and unzip it into the tools/cinebench directory.",
-    "manual_install": true,
+    "download": {
+      "download_url": "https://www.maxon.net/en/downloads/cinebench-r23-downloads",
+      "manual_download": true,
+      "download_instructions": "Please download Cinebench manually from https://www.maxon.net/en/downloads/cinebench-r23-downloads"
+    },
+    "install": {
+      "install_dir": "tools/cinebench",
+      "install_command": null,
+      "manual_install": true,
+      "install_instructions": "Please unzip the downloaded file into the tools/cinebench directory.",
+      "uninstall_command": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
+    },
     "requirements": "Manual download required. No external dependencies.",
     "runner": {
       "command": "\"{install_dir}\\Cinebench.exe\" --cli --logfile \"{log_file}\"",
@@ -54,10 +70,18 @@
     "short_name": "CDM",
     "description": "Measures disk read/write speeds across sequential and random patterns.",
     "function": "Disk performance",
-    "download_url": "https://github.com/crystalmarkofficial/CrystalDiskMark/releases/download/8.0.4/CrystalDiskMark8_0_4.zip",
-    "install_dir": "tools/crystaldiskmark",
-    "install_command": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
-    "manual_install": false,
+    "download": {
+      "download_url": "https://github.com/crystalmarkofficial/CrystalDiskMark/releases/download/8.0.4/CrystalDiskMark8_0_4.zip",
+      "manual_download": false,
+      "download_instructions": null
+    },
+    "install": {
+      "install_dir": "tools/crystaldiskmark",
+      "install_command": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
+      "manual_install": false,
+      "install_instructions": null,
+      "uninstall_command": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
+    },
     "requirements": null,
     "runner": {
       "command": "\"{install_dir}\\DiskMark64.exe\" /S /L=\"{log_file}\"",
@@ -79,10 +103,18 @@
     "short_name": "GB6",
     "description": "Cross-platform benchmark for CPU (single/multi-core) and GPU compute performance.",
     "function": "General system performance (CPU/GPU)",
-    "download_url": "https://cdn.geekbench.com/Geekbench-6.2.2-WindowsSetup.exe",
-    "install_dir": "tools/geekbench",
-    "install_command": "Start-Process -Wait -FilePath \"{download_path}\"",
-    "manual_install": false,
+    "download": {
+      "download_url": "https://cdn.geekbench.com/Geekbench-6.2.2-WindowsSetup.exe",
+      "manual_download": false,
+      "download_instructions": null
+    },
+    "install": {
+      "install_dir": "tools/geekbench",
+      "install_command": "Start-Process -Wait -FilePath \"{download_path}\"",
+      "manual_install": false,
+      "install_instructions": null,
+      "uninstall_command": "Start-Process -Wait -FilePath \"${Env:ProgramFiles}\\Geekbench 6\\unins000.exe\" -ArgumentList \"/SILENT\""
+    },
     "requirements": null,
     "runner": {
       "command": "\"{install_dir}\\geekbench6.exe\" --save \"{log_file}\"",
@@ -105,13 +137,21 @@
     "short_name": "PTB",
     "description": "Synthetic benchmark for matrix ops using PyTorch to assess CPU/GPU tensor performance.",
     "function": "ML framework performance",
-    "download_url": null,
-    "install_dir": "tools/pytorch",
-    "install_command": "Check that Python and the torch package are installed. Run: python -c \"import torch\"",
-    "manual_install": false,
+    "download": {
+      "download_url": null,
+      "manual_download": true,
+      "download_instructions": "Launch Python command window and run:\npip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121\n\nFor CPU-only version use:\npip install torch torchvision torchaudio"
+    },
+    "install": {
+      "install_dir": "tools/pytorch",
+      "install_command": null,
+      "manual_install": true,
+      "install_instructions": "Verify installation by running: python -c \"import torch; print(f'PyTorch {torch.__version__} installed successfully. CUDA available: {torch.cuda.is_available()}')\"",
+      "uninstall_command": "pip uninstall -y torch torchvision torchaudio"
+    },
     "requirements": "Python (WinPython) and PyTorch must be installed and accessible in the current environment.",
     "runner": {
-      "command": "\"C:\\winpy\\python.exe\" \"{install_dir}\\pytorch_benchmark.py\" > \"{log_file}\"",
+      "command": "\"{Env:WINPYTHON}\" \"{install_dir}\\pytorch_benchmark.py\" > \"{log_file}\"",
       "log_file_pattern": "{timestamp} pytorch_benchmark.log",
       "requires_admin": false
     },

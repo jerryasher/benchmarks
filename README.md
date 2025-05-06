@@ -9,6 +9,30 @@ It should work on any Windows machine. The current test system is a
 Beelink EQR-6 with Ryzen 9 6900HX and Radeon Graphics.  A simple,
 modular benchmarking framework for Windows systems.
 
+# Guidelines
+
+## Writing Guidelines
+
+When modifying files in this project, please follow these principles:
+
+- **Minimal necessary changes**: Only modify what's required to make
+  the files work together correctly.
+
+- **Preserve structure and intent**: Keep the original format,
+  organization, and purpose of each file.
+
+- **Document changes**: When making changes, clearly explain why
+    they're needed.
+
+- **72 Colums**: Strive to wrap columns in code and markdown files at
+    72 columns
+
+- **Scripting**: Scripts can be written in Powershell 5 or Python 3
+
+- UTF-8 will be used throughout
+
+- Files should have a final linefeed
+
 ## Purpose
 
 This project aims to:
@@ -22,12 +46,10 @@ This project aims to:
 Originally designed for the Beelink EQr6 (AMD Ryzen 9 6900HX), but
 adaptable to any Windows environment with PowerShell and Python.
 
----
-
-## Setup and Requirements
+# Requirements
 
 - Windows 10/11
-- PowerShell 5 (no elevation needed)
+- PowerShell 5
 - Python 3 (currently using [WinPython](https://winpython.github.io/))
 - Environment variables:
   - `WINPYROOT` — root of WinPython installation 
@@ -36,7 +58,7 @@ adaptable to any Windows environment with PowerShell and Python.
        (e.g., `c:/Winpy/Winpython64-3.12.9.0slim/WPy64-31290/python/`)
 
 
----
+# Specifications
 
 ## Project Directory Structure
 
@@ -53,70 +75,76 @@ summary/             # CSVs and human-readable summaries
 archive/             # Archived raw logs and processed results files
 ```
 
----
-
 ## PowerShell Script Overview
 
-| Script                         | Purpose                                                                 |
-|--------------------------------|-------------------------------------------------------------------------|
-| `benchmark-tool-downloads.ps1` | Downloads benchmark tools listed in `config.json`.                      |
-| `benchmark-tool-install.ps1`   | Installs tools or shows manual instructions (e.g., for Cinebench).      |
-| `benchmark-tool-cleanup.ps1`   | Deletes downloaded and installed files.                                 |
-
----
+| Script                | Purpose                                                                 |
+|-----------------------|-------------------------------------------------------------------------|
+| `run-benchmark.ps1`   | Top level script to run the benchmark suite.                            |
+| `tool-download.ps1`   | Downloads benchmark tools listed in `config.json`.                      |
+| `tool-install.ps1`    | Installs tools or shows manual instructions (e.g., for Cinebench).      |
+| `tool-cleanup.ps1`    | Deletes downloaded and installed files.                                 |
 
 ## Benchmark Configuration (config.json)
 
-Defines metadata for each benchmark tool, including how to download, install, and run them.
+Defines metadata for each benchmark tool, including how to download,
+install, and run them. Each tool is defined as a JSON object with the
+following structure:
 
-* `long_name`, `short_name`
-* `description`
-* `function or category`: benchmark purpose (e.g. CPU, disk, ML)
-* `download_url`, `download_instructions`
-* `install_dir`, `install_command`, `install instructions`
-* `runner`: includes command, log file pattern, requires\_admin
-* `parser`: includes method, regex patterns
-* `custom_parser`: Python script to use, if any
-* `requirements`: informational field containing dependencies
-* `enabled`: whether the tool is active
+```json
+{
+  "tool-name": {
+    "long_name": "Full Tool Name",
+    "short_name": "Brief name",
+    "description": "Description of what the tool tests",
+    "function": "Category of benchmark (CPU, Disk, etc.)",
+    "download": {
+      "download_url": "https://example.com/download/url",
+      "manual_download": true|false,
+      "download_instructions": ""
+      },
+    "install": {
+      "install_dir": "tools/tool-name",
+      "install_command": "Command or script to install",
+      "manual_install": true|false,
+      "install_instructions": "",
+      "uninstall_command": "Command or script to uninstall"
+    },
+    "requirements": "Notes about dependencies",
+    "runner": {
+      "command": "Command to execute the benchmark",
+      "log_file_pattern": "Pattern for naming log files",
+      "requires_admin": true|false
+    },
+    "parser": {
+      "method": "regex|script",
+      "regex_patterns": {
+        "Metric1": "regex pattern with (capture group)",
+        "Metric2": "another regex pattern"
+      },
+      "custom_parser": "parse_script.py"
+    },
+    "enabled": true|false
+  }
+}
+```
 
-### Supported Fields
+### Key Fields
 
 | Field            | Description                                                              |
 |------------------|--------------------------------------------------------------------------|
-| `tool`           | Unique tool name (used in script matching).                             |
-| `url`            | HTTP(s) source for download.                                             |
-| `destination`    | Path where the file should be stored.                                    |
-| `manual_download`| If `true`, will instruct the user to download manually (e.g., Cinebench).|
-| `install_command`| Human-readable summary of what installation entails.                     |
-| `requirements`   | Dependencies required for the benchmark to function (e.g., Python).      |
-
----
-
-## Results Format
-
-All benchmark results should be written as **wide CSV** under `benchmarks/results/`.
-
-- Each **row** = one run of a tool.
-- Each **column** = one metric or system detail (e.g., CPU, FPS, time).
-- Timestamp and tool name included in each row.
-
----
-
-## Manual Download Requirements
-
-Some tools cannot be downloaded programmatically due to licensing or
-authentication (e.g., Cinebench). If download_instructions is a string,
-it will be presented to the user.
-
-## Manual Installation Requirements
-
-Some tools may require manual installation
-
-For these, if install instructions is a string, it will be presented
-to the user
-
----
+| `long_name`      | Full name of the benchmark tool                                          |
+| `short_name`     | Abbreviation or short name used in reports                               |
+| `description`    | Brief description of what the tool measures                              |
+| `function`       | Category of benchmark (e.g., CPU, Disk, ML)                              |
+| `download_url`   | HTTP(s) source for download                                              |
+| `install_dir`    | Path where the tool should be installed                                  |
+| `install_command`| Shell command to install the tool or instructions for manual installation|
+| `uninstall_command`| Shell command to uninstall the tool or instructions for manual removal |
+| `manual_install` | If `true`, will instruct the user to install manually                    |
+| `requirements`   | Dependencies required for the benchmark to function                      |
+| `runner`         | Object containing command execution details                              |
+| `parser`         | Object containing result parsing information                             |
+| `enabled`        | Boolean flag indicating if this tool should be used                      |
 
 ## Adding a New Benchmark Tool
 
@@ -124,9 +152,56 @@ To add a new benchmark:
 
 1. Add a new entry to `config.json`.
 
----
+## Download Configuration
 
-## Supported Benchmarks
+Some tools cannot be downloaded programmatically due to licensing or
+authentication (e.g., Cinebench) as indicated by `manual_download`. In
+these cases the download_instructions will be presented to the user.
+
+### Install Configuration
+
+The `install object` defines how to install/uninstall the benchmark tool
+
+Some tools may require manual installation indicated by the
+`manual_install field`. For these, the `install_instructions` will be
+presented to the user
+
+### Runner Configuration
+
+The `runner` object defines how to execute the benchmark:
+
+| Field             | Description                                                 |
+|-------------------|-------------------------------------------------------------|
+| `command`         | Command line to execute the benchmark                       |
+| `log_file_pattern`| Pattern for log file names (with `{timestamp}` placeholder) |
+| `requires_admin`  | Whether admin privileges are required to run                 |
+
+Each benchmark run's output will be placed in a file named `YYYY-MM-DD
+HH-MM_<tool>_<toolversion>.log`
+
+### Process/Parse Configuration
+
+The `parser` object defines how to extract metrics from benchmark's
+log file. Output from the process/parse stage will be placed in a file
+named `YYYY-MM-DD HH-MM_<tool>_<toolversion>.csv`. This file will be a
+wide format CSV.
+
+| Field           | Description                                                 |
+|-----------------|-------------------------------------------------------------|
+| `method`        | Parsing method: `regex` or `script`                         |
+| `regex_patterns`| Dictionary of metric names to regex patterns with capture groups |
+| `custom_parser` | Path to Python script for custom parsing (if `method` is `script`) |
+
+#### Results Format
+
+All benchmark results should be written as **wide CSV** under
+`benchmarks/results/`.
+
+- Each **row** = one run of a tool.
+- Each **column** = one metric or system detail (e.g., CPU, FPS, time).
+- Timestamp and tool name included in each row.
+
+# Currently Supported Benchmarks
 
 * CPU-Z
 * Cinebench
@@ -134,16 +209,7 @@ To add a new benchmark:
 * Geekbench
 * PyTorch (custom benchmark)
 
-## Output Format
-
-* **Log naming**: `YYYY-MM-DD HH-MM_tool_version.log`
-* **CSV format**: Wide format
-
-  * One row per benchmark run
-  * One column per metric
-  * Timestamp columns included
-
-## Design Principles
+# Design Principles
 
 * Steps are separated into separate scripts that strive for
   idempotency
@@ -153,10 +219,18 @@ To add a new benchmark:
 * Future CLI summaries will visualize trends
 * Parsers may use regex or custom Python
 
-## Documentation Guidelines
+# Documentation
 
-* README and script comments should wrap at 72 columns
-* Documentation is embedded directly in scripts where possible
-* Guidelines, Requirements, Derived Requirements, Dependencies
-  should be collected in the README under sections
-  Guidelines, Requirements, Derived Requirements, Dependencies
+* Documentation related to usage, functionality or algorithm is
+  embedded directly in scripts where possible
+
+* This README should have a major section labled Derived which
+  contains locations to collect proposed derived Guidelines,
+  Requirements and Specifications if otherwise unsure of where in the
+  document to place them
+
+# Derived
+
+## Guidelines
+## Requirements
+## Specifications
