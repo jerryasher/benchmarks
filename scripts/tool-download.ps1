@@ -7,6 +7,37 @@
     all enabled benchmark tools. If a tool requires manual download,
     it provides instructions to the user.
 
+.PARAMETER ConfigFile
+    Specifies the path to the configuration file. Defaults to 'config.json'.
+
+.PARAMETER DownloadDir
+    Specifies the directory where tools are downloaded. Defaults to 'downloads'.
+
+.PARAMETER Force
+    Overwrites existing files if specified.
+
+.PARAMETER Tools
+    Specifies a list of tools to download. If not provided, all enabled tools are processed.
+
+.PARAMETER Help
+    Displays this help information. Alias: -h
+
+.EXAMPLE
+    .\tool-download.ps1
+    Downloads all enabled tools from config.json to the default 'downloads' directory.
+
+.EXAMPLE
+    .\tool-download.ps1 -ConfigFile "myconfig.json" -DownloadDir "tools"
+    Downloads tools specified in myconfig.json to the 'tools' directory.
+
+.EXAMPLE
+    .\tool-download.ps1 -Tools "tool1","tool2" -Force
+    Downloads only tool1 and tool2, overwriting existing files if they exist.
+
+.EXAMPLE
+    .\tool-download.ps1 -h
+    Displays this help information.
+
 .NOTES
     File Name      : tool-download.ps1
     Prerequisite   : PowerShell 5.0 or later
@@ -25,8 +56,18 @@ param(
     [switch]$Force,
     
     [Parameter(Mandatory=$false)]
-    [string[]]$Tools
+    [string[]]$Tools,
+
+    [Parameter(Mandatory=$false)]
+    [Alias("h")]
+    [switch]$Help
 )
+
+# Display help if -Help or -h is specified
+if ($Help) {
+    Get-Help $MyInvocation.MyCommand.Path
+    exit 0
+}
 
 Write-Host "ConfigFile: $ConfigFile"
 Write-Host "DownloadDir: $DownloadDir"
@@ -49,8 +90,7 @@ try {
 } catch {
     Write-Host "Caught exception: $($_.GetType().FullName)"
     Write-Host "Exception message: $($_.Exception.Message)"
-    # Write-Error "Failed to load configuration from ${ConfigFile}: $_"
-    Write-Error "Failed to load configuration from $ConfigFile: $($_.Exception.Message)
+    Write-Error "Failed to load configuration from ${ConfigFile}: $($_.Exception.Message)"
     exit 1
 }
 
@@ -112,6 +152,7 @@ function Show-ManualDownloadInstructions {
 
 # Process each tool in the configuration
 $ToolsToProcess = @()
+$ManualDownloadTools = @()
 
 # Determine which tools to process
 if ($Tools) {
@@ -133,16 +174,21 @@ if ($Tools) {
     }
 }
 
-# Download each selected tool
+Write-Host "Processing tools: $ToolsToProcess"
+
+# Process automatic downloads first and queue manual downloads
 foreach ($ToolName in $ToolsToProcess) {
     $ToolConfig = $Config.$ToolName
     Write-Host "`nProcessing $($ToolConfig.long_name) ($ToolName)..." -ForegroundColor Blue
     
     # Check if tool is enabled (redundant for explicitly specified tools)
     if ($Tools -or $ToolConfig.enabled -eq $true) {
-        # Check if manual download is required
         if ($ToolConfig.download.manual_download -eq $true) {
-            Show-ManualDownloadInstructions -ToolName $ToolName -ToolConfig $ToolConfig
+            # Queue manual download for later processing
+            $ManualDownloadTools += [PSCustomObject]@{
+                ToolName = $ToolName
+                ToolConfig = $ToolConfig
+            }
         } else {
             # Handle automatic download
             if ($ToolConfig.download.download_url) {
@@ -173,5 +219,54 @@ foreach ($ToolName in $ToolsToProcess) {
     }
 }
 
-Write-Host "`nDownload process completed!" -ForegroundColor Green
+# Process manual downloads
+if ($ManualDownloadTools.Count -gt 0) {
+    Write-Host "`n======================================================" -ForegroundColor Cyan
+    Write-Host "MANUAL DOWNLOADS REQUIRED" -ForegroundColor Cyan
+    Write-Host "======================================================" -ForegroundColor Cyan
+    Write-Host "The following tools require manual download. Please follow the instructions below and place the downloaded files in the specified directories.`n"
+    
+    foreach ($ManualTool in $ManualDownloadTools) {
+        $ToolName = $ManualTool.ToolName
+        $ToolConfig = $ManualTool.ToolConfig
+        Write-Host "Tool: $($ToolConfig.long_name) ($ToolName)" -ForegroundColor Cyan
+        if ($ToolConfig.download.download_url) {
+            Write-Host "Download from: $($ToolConfig.download.download_url)"
+        }
+        if ($ToolConfig.download.download_instructions) {
+            Write-Host "Instructions:`n$($ToolConfig.download.download_instructions)"
+        }
+        Write-Host "Target directory: $($ToolConfig.install.install_dir)"
+        Write-Host "------------------------------------------------------`n"
+    }
+    
+    Write-Host "Please complete the downloads before continuing."
+    Write-Host "Press Enter to proceed and specify the downloaded file paths..."
+    $null = Read-Host
+    
+    # Prompt for file paths and save metadata
+    foreach ($ManualTool in $ManualDownloadTools) {
+        $ToolName = $ManualTool.ToolName
+        $ToolConfig = $ManualTool.ToolConfig
+        Write-Host "`nEnter the full path to the downloaded file for $($ToolConfig.long_name) ($ToolName):"
+        $DownloadPath = Read-Host
+        
+        if (Test-Path -Path $DownloadPath) {
+            # Store download path in a file for later use by the install script
+            $DownloadInfo = @{
+                "tool_name" = $ToolName
+                "download_path" = $DownloadPath
+                "timestamp" = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            } | ConvertTo-Json
+            
+            $DownloadInfoPath = Join-Path -Path $DownloadDir -ChildPath "$ToolName-download-info.json"
+            $DownloadInfo | Out-File -FilePath $DownloadInfoPath -Force
+            
+            Write-Host "Download information saved to $DownloadInfoPath" -ForegroundColor Green
+        } else {
+            Write-Warning "File not found at $DownloadPath. Metadata not saved for $ToolName."
+        }
+    }
+}
 
+Write-Host "`nDownload process completed!" -ForegroundColor Green

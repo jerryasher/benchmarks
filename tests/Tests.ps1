@@ -46,6 +46,9 @@ Describe "Windows Benchmark Toolkit Scripts" {
         Mock Invoke-Expression { }
         Mock Expand-Archive { }
         Mock Start-Process { }
+
+        # Mock Read-Host for manual download prompts
+        Mock Read-Host { "TestDrive:\downloads\$($args[0]).zip" }
     }
 
     Describe "tool-download.ps1" {
@@ -64,15 +67,45 @@ Describe "Windows Benchmark Toolkit Scripts" {
                 & "$ScriptsDir\tool-download.ps1" -ConfigFile "TestDrive:\config.json" -DownloadDir $DownloadDir
 
                 Assert-MockCalled Invoke-WebRequest -Times 3 -Exactly # cpu-z, crystaldiskmark, geekbench
-                Assert-MockCalled Out-File -Times 3 -Exactly # download-info.json for each
+                Assert-MockCalled Out-File -Times 5 -Exactly # download-info.json for cpu-z, crystaldiskmark, geekbench, cinebench, pytorch
                 Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Download successful*" }
             }
 
-            It "Displays manual download instructions for Cinebench and PyTorch" {
+            It "Displays consolidated manual download instructions for Cinebench and PyTorch" {
+                Mock Read-Host { "TestDrive:\downloads\cinebench.zip" } -ParameterFilter { $args[0] -eq "cinebench" }
+                Mock Read-Host { "TestDrive:\downloads\pytorch.zip" } -ParameterFilter { $args[0] -eq "pytorch" }
+
                 & "$ScriptsDir\tool-download.ps1" -ConfigFile "TestDrive:\config.json" -DownloadDir $DownloadDir
 
-                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*MANUAL DOWNLOAD REQUIRED for Cinebench*" }
-                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*MANUAL DOWNLOAD REQUIRED for PyTorch*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*MANUAL DOWNLOADS REQUIRED*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Tool: Cinebench R23 (cinebench)*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Tool: PyTorch Microbenchmark (pytorch)*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Target directory: tools/cinebench*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Target directory: tools/pytorch*" }
+                Assert-MockCalled Read-Host -Times 3 -Exactly # Once for pause, once each for cinebench and pytorch
+            }
+
+            It "Saves metadata for manual downloads after user input" {
+                Mock Read-Host { "TestDrive:\downloads\cinebench.zip" } -ParameterFilter { $args[0] -eq "cinebench" }
+                Mock Read-Host { "TestDrive:\downloads\pytorch.zip" } -ParameterFilter { $args[0] -eq "pytorch" }
+                Mock Out-File { } -ParameterFilter { $FilePath -like "*cinebench-download-info.json" }
+                Mock Out-File { } -ParameterFilter { $FilePath -like "*pytorch-download-info.json" }
+
+                & "$ScriptsDir\tool-download.ps1" -ConfigFile "TestDrive:\config.json" -DownloadDir $DownloadDir
+
+                Assert-MockCalled Out-File -ParameterFilter { $FilePath -like "*cinebench-download-info.json" } -Times 1 -Exactly
+                Assert-MockCalled Out-File -ParameterFilter { $FilePath -like "*pytorch-download-info.json" } -Times 1 -Exactly
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Download information saved to *cinebench-download-info.json*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Download information saved to *pytorch-download-info.json*" }
+            }
+
+            It "Warns for invalid manual download file paths" {
+                Mock Read-Host { "TestDrive:\downloads\invalid.zip" } -ParameterFilter { $args[0] -eq "cinebench" }
+                Mock Test-Path { $false } -ParameterFilter { $Path -like "*invalid.zip" }
+
+                & "$ScriptsDir\tool-download.ps1" -ConfigFile "TestDrive:\config.json" -DownloadDir $DownloadDir
+
+                Assert-MockCalled Write-Warning -ParameterFilter { $Message -like "*File not found at *invalid.zip*" }
             }
         }
 
@@ -85,6 +118,17 @@ Describe "Windows Benchmark Toolkit Scripts" {
 
                 Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
                 Assert-MockCalled Out-File -Times 1 -Exactly
+            }
+
+            It "Handles manual download for a specific tool (cinebench)" {
+                Mock Read-Host { "TestDrive:\downloads\cinebench.zip" } -ParameterFilter { $args[0] -eq "cinebench" }
+                Mock Out-File { } -ParameterFilter { $FilePath -like "*cinebench-download-info.json" }
+
+                & "$ScriptsDir\tool-download.ps1" -ConfigFile "TestDrive:\config.json" -DownloadDir $DownloadDir -Tools "cinebench"
+
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Tool: Cinebench R23 (cinebench)*" }
+                Assert-MockCalled Read-Host -Times 2 -Exactly # Pause and file path
+                Assert-MockCalled Out-File -ParameterFilter { $FilePath -like "*cinebench-download-info.json" } -Times 1 -Exactly
             }
 
             It "Warns for non-existent tool" {
@@ -100,6 +144,47 @@ Describe "Windows Benchmark Toolkit Scripts" {
                 Mock Get-Content { throw "File not found" }
 
                 { & "$ScriptsDir\tool-download.ps1" -ConfigFile "TestDrive:\config.json" -DownloadDir $DownloadDir } | Should -Throw
+
+                Assert-MockCalled Write-Error -ParameterFilter { $Message -like "*Failed to load configuration*" }
+            }
+        }
+    }
+
+    Describe "print-config.ps1" {
+        BeforeEach {
+            # Reset mocks
+            Mock Test-Path { $true } -ParameterFilter { $Path -like "*config.json" }
+            Mock Get-Content { $ConfigContent } -ParameterFilter { $Path -like "*config.json" }
+            Mock ConvertFrom-Json { ConvertFrom-Json $ConfigContent }
+        }
+
+        Context "When displaying configuration" {
+            It "Displays a table with correct tool names and types" {
+                & "$ScriptsDir\print-config.ps1" -ConfigFile "TestDrive:\config.json"
+
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*CPU-Z Benchmark*Automatic*Automatic*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Cinebench R23*Manual*Manual*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*CrystalDiskMark*Automatic*Automatic*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Geekbench 6*Automatic*Automatic*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*PyTorch Microbenchmark*Manual*Manual*" }
+                Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Benchmark Tools Configuration:*" }
+            }
+        }
+
+        Context "When config.json is invalid" {
+            It "Exits with error if config.json is missing" {
+                Mock Test-Path { $false } -ParameterFilter { $Path -like "*config.json" }
+
+                { & "$ScriptsDir\print-config.ps1" -ConfigFile "TestDrive:\config.json" } | Should -Throw
+
+                Assert-MockCalled Write-Error -ParameterFilter { $Message -like "*Configuration file not found*" }
+            }
+
+            It "Exits with error if config.json is invalid JSON" {
+                Mock Get-Content { "invalid json" } -ParameterFilter { $Path -like "*config.json" }
+                Mock ConvertFrom-Json { throw "Invalid JSON" }
+
+                { & "$ScriptsDir\print-config.ps1" -ConfigFile "TestDrive:\config.json" } | Should -Throw
 
                 Assert-MockCalled Write-Error -ParameterFilter { $Message -like "*Failed to load configuration*" }
             }

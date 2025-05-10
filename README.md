@@ -21,13 +21,15 @@ When modifying files in this project, please follow these principles:
 - **Preserve structure and intent**: Keep the original format,
   organization, and purpose of each file.
 
+- **Scripting**: Scripts can be written in Powershell 5 or Python 3
+
 - **Document changes**: When making changes, clearly explain why
     they're needed.
 
 - **72 Colums**: Strive to wrap columns in code and markdown files at
     72 columns
 
-- **Scripting**: Scripts can be written in Powershell 5 or Python 3
+- Lines will be terminated UNIX style with LF not with CRLF
 
 - UTF-8 will be used throughout
 
@@ -36,12 +38,23 @@ When modifying files in this project, please follow these principles:
 - Ask if a pester test or similar test can be written for the current
   script.
 
+- Powershell scripts should have a header/documentation/help block that
+  provides .synopsis .description .notes .parameter .example
+
+- Powershell Scripts should also offer a -Help and -h arguments which
+  if included in the command line invoke
+  GetHelp $MyInvocation.MyCommand.Path
+  and then exit
+
+- Python scripts should contain header documentation as per current
+  Python guidelines including command line usage and -h --help
+
 ## Purpose
 
 This project aims to:
 
 - Track performance across software/hardware changes (e.g., drivers,
-  software install, OS updates).  
+  software install, OS updates).
 - Collect reproducible benchmark results in wide CSV format.
 - Support modular tools: you can plug in new benchmarks easily.
 - Emphasize automation without administrative privileges or bloat.
@@ -55,11 +68,10 @@ adaptable to any Windows environment with PowerShell and Python.
 - PowerShell 5
 - Python 3 (currently using [WinPython](https://winpython.github.io/))
 - Environment variables:
-  - `WINPYROOT` — root of WinPython installation 
+  - `WINPYROOT` — root of WinPython installation
        (e.g., `C:\winpy`)
-  - `WINPYTHON` — full path to Python executable 
+  - `WINPYTHON` — full path to Python executable
        (e.g., `c:/Winpy/Winpython64-3.12.9.0slim/WPy64-31290/python/`)
-
 
 # Specifications
 
@@ -81,12 +93,15 @@ archive/             # Archived raw logs and processed results files
 
 ## PowerShell Script Overview
 
-| Script                | Purpose                                                                 |
-|-----------------------|-------------------------------------------------------------------------|
-| `run-benchmark.ps1`   | Top level script to run the benchmark suite.                            |
-| `tool-download.ps1`   | Downloads benchmark tools listed in `config.json`.                      |
-| `tool-install.ps1`    | Installs tools or shows manual instructions (e.g., for Cinebench).      |
-| `tool-cleanup.ps1`    | Deletes downloaded and installed files.                                 |
+| Script                     | Purpose                                                               |
+|----------------------------|-----------------------------------------------------------------------|
+| `run-benchmark.ps1`        | Top level script to run the benchmark suite.                          |
+| `tool-download.ps1`        | Downloads benchmark tools listed in `config.json`.                    |
+| `tool-install.ps1`         | Installs tools or shows manual instructions (e.g., for Cinebench).    |
+| `tool-cleanup.ps1`         | Deletes downloaded and installed files.                               |
+| `scripts/print-config.ps1` | Displays the benchmark tools configuration in a tabular format,       |
+|                            | showing tool name, download type (manual/automatic), and install type |
+|                            | (manual/automatic).                                                   |
 
 ## Benchmark Configuration (config.json)
 
@@ -226,8 +241,7 @@ All benchmark results should be written as **wide CSV** under
 
 # Design Principles
 
-* Steps are separated into separate scripts that strive for
-  idempotency
+* Steps are separated into separate scripts that strive for idempotency
 * Execution and parsing are separated
 * Raw logs are archived after parsing
 * Scripts fail gracefully and verify success
@@ -251,3 +265,4 @@ All benchmark results should be written as **wide CSV** under
 ## Guidelines
 ## Requirements
 ## Specifications
+
