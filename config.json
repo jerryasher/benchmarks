@@ -7,14 +7,14 @@
     "download": {
       "download_url": "https://download.cpuid.com/cpu-z/cpu-z_2.09-en.zip",
       "manual_download": false,
-      "download_instructions": null
+      "download_inst": null
     },
     "install": {
       "install_dir": "tools/cpu-z",
-      "install_command": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
+      "install_cmd": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
       "manual_install": false,
-      "install_instructions": null,
-      "uninstall_command": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
+      "install_inst": null,
+      "uninstall_cmd": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
     },
     "requirements": null,
     "runner": {
@@ -40,14 +40,14 @@
     "download": {
       "download_url": "https://www.maxon.net/en/downloads/cinebench-r23-downloads",
       "manual_download": true,
-      "download_instructions": "Please download Cinebench manually from https://www.maxon.net/en/downloads/cinebench-r23-downloads"
+      "download_inst": "Please download Cinebench manually from https://www.maxon.net/en/downloads/cinebench-r23-downloads"
     },
     "install": {
       "install_dir": "tools/cinebench",
-      "install_command": null,
+      "install_cmd": null,
       "manual_install": true,
-      "install_instructions": "Please unzip the downloaded file into the tools/cinebench directory.",
-      "uninstall_command": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
+      "install_inst": "Please unzip the downloaded file into the tools/cinebench directory.",
+      "uninstall_cmd": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
     },
     "requirements": "Manual download required. No external dependencies.",
     "runner": {
@@ -73,14 +73,14 @@
     "download": {
       "download_url": "https://github.com/crystalmarkofficial/CrystalDiskMark/releases/download/8.0.4/CrystalDiskMark8_0_4.zip",
       "manual_download": false,
-      "download_instructions": null
+      "download_inst": null
     },
     "install": {
       "install_dir": "tools/crystaldiskmark",
-      "install_command": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
+      "install_cmd": "Expand-Archive -Path \"{download_path}\" -DestinationPath \"{install_dir}\" -Force",
       "manual_install": false,
-      "install_instructions": null,
-      "uninstall_command": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
+      "install_inst": null,
+      "uninstall_cmd": "Remove-Item -Path \"{install_dir}\" -Recurse -Force"
     },
     "requirements": null,
     "runner": {
@@ -106,14 +106,14 @@
     "download": {
       "download_url": "https://cdn.geekbench.com/Geekbench-6.2.2-WindowsSetup.exe",
       "manual_download": false,
-      "download_instructions": null
+      "download_inst": null
     },
     "install": {
       "install_dir": "tools/geekbench",
-      "install_command": "Start-Process -Wait -FilePath \"{download_path}\"",
+      "install_cmd": "Start-Process -Wait -FilePath \"{download_path}\"",
       "manual_install": false,
-      "install_instructions": null,
-      "uninstall_command": "Start-Process -Wait -FilePath \"${Env:ProgramFiles}\\Geekbench 6\\unins000.exe\" -ArgumentList \"/SILENT\""
+      "install_inst": null,
+      "uninstall_cmd": "Start-Process -Wait -FilePath \"${Env:ProgramFiles}\\Geekbench 6\\unins000.exe\" -ArgumentList \"/SILENT\""
     },
     "requirements": null,
     "runner": {
@@ -140,14 +140,14 @@
     "download": {
       "download_url": null,
       "manual_download": true,
-      "download_instructions": "Launch Python command window and run:\npip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121\n\nFor CPU-only version use:\npip install torch torchvision torchaudio"
+      "download_inst": "Launch Python command window and run:\npip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121\n\nFor CPU-only version use:\npip install torch torchvision torchaudio"
     },
     "install": {
       "install_dir": "tools/pytorch",
-      "install_command": null,
+      "install_cmd": null,
       "manual_install": true,
-      "install_instructions": "Verify installation by running: python -c \"import torch; print(f'PyTorch {torch.__version__} installed successfully. CUDA available: {torch.cuda.is_available()}')\"",
-      "uninstall_command": "pip uninstall -y torch torchvision torchaudio"
+      "install_inst": "Verify installation by running: python -c \"import torch; print(f'PyTorch {torch.__version__} installed successfully. CUDA available: {torch.cuda.is_available()}')\"",
+      "uninstall_cmd": "pip uninstall -y torch torchvision torchaudio"
     },
     "requirements": "Python (WinPython) and PyTorch must be installed and accessible in the current environment.",
     "runner": {

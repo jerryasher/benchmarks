@@ -112,16 +112,16 @@ as a JSON object with fields controlling its behavior.
     "download": {
       "download_url": "https://example.com/download/url",
       "manual_download": true|false,
-      "download_instructions": ""
+      "download_inst": null
     },
     "install": {
       "install_dir": "tools/tool-name",
-      "install_command": "Command or script to install",
+      "install_cmd": "Command or script to install",
       "manual_install": true|false,
-      "install_instructions": "",
-      "uninstall_command": "Command or script to uninstall"
+      "install_inst": null,
+      "uninstall_cmd": "Command or script to uninstall"
     },
-    "requirements": "Notes about dependencies",
+    "requirements": null,
     "runner": {
       "command": "Command to execute the benchmark",
       "log_file_pattern": "Pattern for naming log files",
@@ -133,7 +133,7 @@ as a JSON object with fields controlling its behavior.
         "Metric1": "regex pattern with (capture group)",
         "Metric2": "another regex pattern"
       },
-      "custom_parser": "parse_script.py"
+      "custom_parser": null
     },
     "enabled": true|false
   }
@@ -156,10 +156,10 @@ as a JSON object with fields controlling its behavior.
 | `manual_install`  | If `true`, will instruct user to install manually   |
 | `install_inst`    | Install instructions                                |
 | `uninstall_cmd`   | Shell command to uninstall the tool                 |
-| `requirements`    | Dependencies required for the benchmark to function |
+| `requirements`    | Notes about dependencies                            |
 | `runner`          | Object containing command execution details         |
 | `parser`          | Object containing result parsing information        |
-| `enabled`         | Boolean flag indicating if this tool should be used |
+| `enabled`         | Boolean flag indicating if this tool should be run  |
 
 ### Adding a New Benchmark Tool
 
@@ -221,6 +221,24 @@ wide format CSV.
 | `method`        | Parsing method: `regex` or `script`                         |
 | `regex_patterns`| Dictionary of metric names to regex patterns with capture groups |
 | `custom_parser` | Path to Python script for custom parsing (if `method` is `script`) |
+
+
+
+| Field            | Description                                              |
+| ---------------- | -------------------------------------------------------- |
+| `method`         | Either `"regex"` or `"script"`                           |
+| `regex_patterns` | Dict of metric names → regex patterns with capture group |
+| `custom_parser`  | Python script path if `method` is `script`               |
+
+Rules:
+
++ If method is "regex":
+  + Must provide regex_patterns (non-empty)
+  + custom_parser must be null
+
++ If method is "script":
+  + Must provide custom_parser (non-null)
+  + regex_patterns may be empty or omitted
 
 ### Results Format
 
