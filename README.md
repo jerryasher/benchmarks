@@ -1,86 +1,69 @@
 # Windows Benchmark Toolkit
 
+A simple, modular benchmarking framework for Windows systems.
+
+## Overview & Purpose
+
 This suite automates the downloading, installation, running, and
 parsing of benchmark tools on Windows, enabling both one-off and
 long-term performance tracking. It is script-driven, modular, and uses
 JSON configuration files to define tool behaviors.
 
 It should work on any Windows machine. The current test system is a
-Beelink EQR-6 with Ryzen 9 6900HX and Radeon Graphics.  A simple,
-modular benchmarking framework for Windows systems.
-
-# Guidelines
-
-## Writing Guidelines
-
-When modifying files in this project, please follow these principles:
-
-- **Minimal necessary changes**: Only modify what's required to make
-  the files work together correctly.
-
-- **Preserve structure and intent**: Keep the original format,
-  organization, and purpose of each file.
-
-- **Scripting**: Scripts can be written in Powershell 5 or Python 3
-
-- **Document changes**: When making changes, clearly explain why
-    they're needed.
-
-- **72 Colums**: Strive to wrap columns in code and markdown files at
-    72 columns
-
-- Lines will be terminated UNIX style with LF not with CRLF
-
-- UTF-8 will be used throughout
-
-- All files should have a final linefeed
-
-- Ask if a pester test or similar test can be written for the current
-  script.
-
-- Powershell scripts should have a header/documentation/help block that
-  provides .synopsis .description .notes .parameter .example
-
-- Powershell Scripts should also offer a -Help and -h arguments which
-  if included in the command line invoke
-  GetHelp $MyInvocation.MyCommand.Path
-  and then exit
-
-- Python scripts should contain header documentation as per current
-  Python guidelines including command line usage and -h --help
-
-## Purpose
+Beelink EQR-6 with Ryzen 9 6900HX and Radeon Graphics. Adaptable to
+any Windows environment with PowerShell and Python.
 
 This project aims to:
 
 - Track performance across software/hardware changes (e.g., drivers,
-  software install, OS updates).
-- Collect reproducible benchmark results in wide CSV format.
-- Support modular tools: you can plug in new benchmarks easily.
-- Emphasize automation without administrative privileges or bloat.
+  software install, OS updates)
+- Collect reproducible benchmark results in wide CSV format
+- Support modular tools: you can plug in new benchmarks easily
+- Emphasize automation without administrative privileges or bloat
 
-Originally designed for the Beelink EQr6 (AMD Ryzen 9 6900HX), but
-adaptable to any Windows environment with PowerShell and Python.
+## Getting Started
 
-# Requirements
+### Requirements
 
 - Windows 10/11
 - PowerShell 5
-- Python 3 (currently using [WinPython](https://winpython.github.io/))
+- Python 3 (currently [WinPython slim](https://winpython.github.io/))
 - Environment variables:
-  - `WINPYROOT` — root of WinPython installation
-       (e.g., `C:\winpy`)
-  - `WINPYTHON` — full path to Python executable
-       (e.g., `c:/Winpy/Winpython64-3.12.9.0slim/WPy64-31290/python/`)
+  - `PYTHON` — full path to Python executable
+     (e.g., `c:/Winpy/Winpython64-3.12.9.0slim/WPy64-31290/python/`)
 
-# Specifications
+### Basic Usage
 
-## Project Directory Structure
+Assuming user starts in a shell at the root benchmarks directory:
+
+```powershell
+# Run the complete benchmark suite
+.\run-benchmark.ps1
+
+# Run a specific benchmark
+.\run-benchmark.ps1 -Tool "cpu-z"
+
+# Run multiple specific benchmarks
+.\run-benchmark.ps1 -Tool "cpu-z","cinebench"
+
+# Download and install tools only
+.\scripts\tool-download.ps1
+.\scripts\tool-install.ps1
+
+# Print the config
+.\scripts\print-config.ps1
+
+# Run the test suite
+Invoke-Pester -Path .\tests\Tests.ps1
+```
+
+## Project Structure
 
 ```
 README.md            # This README.md file, a project readme
+CONTRIBUTING.md      # Guidelines for contributing to the project
 run-benchmark.ps1    # Top level script to run the suite
-config.json          # the json configuration file definining each benchmark tool
+config.json          # json configuration file defining each benchmark
 scripts/             # PowerShell and Python scripts
 tools/               # Installed benchmark tools
 tests/               # Pester tests (and any others)
@@ -91,23 +74,33 @@ summary/             # CSVs and human-readable summaries
 archive/             # Archived raw logs and processed results files
 ```
 
-## PowerShell Script Overview
+## Currently Supported Benchmarks
 
-| Script                     | Purpose                                                               |
-|----------------------------|-----------------------------------------------------------------------|
-| `run-benchmark.ps1`        | Top level script to run the benchmark suite.                          |
-| `tool-download.ps1`        | Downloads benchmark tools listed in `config.json`.                    |
-| `tool-install.ps1`         | Installs tools or shows manual instructions (e.g., for Cinebench).    |
-| `tool-cleanup.ps1`         | Deletes downloaded and installed files.                               |
-| `scripts/print-config.ps1` | Displays the benchmark tools configuration in a tabular format,       |
-|                            | showing tool name, download type (manual/automatic), and install type |
-|                            | (manual/automatic).                                                   |
+* **CPU-Z** - CPU benchmark single and multi-thread scores
+* **Cinebench** - Renders 3D scenes; benchmark CPU multi and single-core
+* **CrystalDiskMark** - Measures disk read/write speeds
+* **Geekbench** - Cross-platform benchmark for CPU and GPU compute
+* **PyTorch** - Custom benchmark for matrix operations using PyTorch
 
-## Benchmark Configuration (config.json)
+### Key Scripts
 
-Defines metadata for each benchmark tool, including how to download,
-install, and run them. Each tool is defined as a JSON object with the
-following structure:
+| Script                     | Purpose                                 |
+|----------------------------|-----------------------------------------|
+| `run-benchmark.ps1`        | Top level script to run the benchmarks  |
+| `tool-download.ps1`        | Download benchmarks in `config.json`    |
+| `tool-install.ps1`         | Installs tools or shows manual          |
+|                            | instructions (e.g., for Cinebench)      |
+| `tool-cleanup.ps1`         | Deletes downloaded and installed files  |
+| `scripts/print-config.ps1` | Displays benchmark tools config in a    |
+|                            | tabular format, showing tool name,      |
+|                            | download type (manual/automatic), and   |
+|                            | install type (manual/automatic)         |
+
+## Configuration
+
+The `config.json` file defines metadata for each benchmark tool,
+including how to download, install, and run them. Each tool is defined
+as a JSON object with fields controlling its behavior.
 
 ```json
 {
@@ -120,7 +113,7 @@ following structure:
       "download_url": "https://example.com/download/url",
       "manual_download": true|false,
       "download_instructions": ""
-      },
+    },
     "install": {
       "install_dir": "tools/tool-name",
       "install_command": "Command or script to install",
@@ -149,41 +142,59 @@ following structure:
 
 ### Key Fields
 
-| Field            | Description                                                              |
-|------------------|--------------------------------------------------------------------------|
-| `long_name`      | Full name of the benchmark tool                                          |
-| `short_name`     | Abbreviation or short name used in reports                               |
-| `description`    | Brief description of what the tool measures                              |
-| `function`       | Category of benchmark (e.g., CPU, Disk, ML)                              |
-| `download_url`   | HTTP(s) source for download                                              |
-| `install_dir`    | Path where the tool should be installed                                  |
-| `install_command`| Shell command to install the tool or instructions for manual installation|
-| `uninstall_command`| Shell command to uninstall the tool or instructions for manual removal |
-| `manual_install` | If `true`, will instruct the user to install manually                    |
-| `requirements`   | Dependencies required for the benchmark to function                      |
-| `runner`         | Object containing command execution details                              |
-| `parser`         | Object containing result parsing information                             |
-| `enabled`        | Boolean flag indicating if this tool should be used                      |
+| Field             | Description                                         |
+|-------------------|-----------------------------------------------------|
+| `long_name`       | Full name of the benchmark tool                     |
+| `short_name`      | Abbreviation or short name used in reports          |
+| `description`     | Brief description of what the tool measures         |
+| `function`        | Category of benchmark (e.g., CPU, Disk, ML)         |
+| `download_url`    | HTTP(s) source for download                         |
+| `manual_download` | If `true`, will instruct user to download manually  |
+| `download_inst`   | Download instructions                               |
+| `install_dir`     | Path where the tool should be installed             |
+| `install_cmd`     | Shell command to install the tool                   |
+| `manual_install`  | If `true`, will instruct user to install manually   |
+| `install_inst`    | Install instructions                                |
+| `uninstall_cmd`   | Shell command to uninstall the tool                 |
+| `requirements`    | Dependencies required for the benchmark to function |
+| `runner`          | Object containing command execution details         |
+| `parser`          | Object containing result parsing information        |
+| `enabled`         | Boolean flag indicating if this tool should be used |
 
-## Adding a New Benchmark Tool
+### Adding a New Benchmark Tool
 
 To add a new benchmark:
 
-1. Add a new entry to `config.json`.
+1. Add a new entry to `config.json` following the schema above
+2. Place any custom parser scripts in the `scripts/` directory
+3. Test the new benchmark independently before adding to the suite
 
-## Download Configuration
+### Download Configuration
 
 Some tools cannot be downloaded programmatically due to licensing or
 authentication (e.g., Cinebench) as indicated by `manual_download`. In
-these cases the download_instructions will be presented to the user.
+these cases the download_inst will be presented to the user. The
+benchmark should be downloaded to the install_dir.
 
 ### Install Configuration
 
 The `install object` defines how to install/uninstall the benchmark tool
 
 Some tools may require manual installation indicated by the
-`manual_install field`. For these, the `install_instructions` will be
-presented to the user
+`manual_install field`. For these, the `install_inst` will be
+presented to the user.
+
+Tools are downloaded to the install_dir and then installed (which may
+just mean expanded) into that directory.
+
+As much as possible, tools should be installed in a portable manner
+not hooking into the windows registry and installed such that deleting
+the directory is all that is needed to uninstall them.
+
+### Uninstall Configuration
+
+`uninstall_cmd` is a command to uninstall a tool, usually by removal
+of the install directory.
 
 ### Runner Configuration
 
@@ -211,7 +222,7 @@ wide format CSV.
 | `regex_patterns`| Dictionary of metric names to regex patterns with capture groups |
 | `custom_parser` | Path to Python script for custom parsing (if `method` is `script`) |
 
-#### Results Format
+### Results Format
 
 All benchmark results should be written as **wide CSV** under
 `benchmarks/results/`.
@@ -220,49 +231,94 @@ All benchmark results should be written as **wide CSV** under
 - Each **column** = one metric or system detail (e.g., CPU, FPS, time).
 - Timestamp and tool name included in each row.
 
-## Tests
+## Development
 
-+ Pester should be installed by
-+ Pester tests can be run from the top level directory by
+### Design Principles
 
-    Invoke-Pester -Path .\tests\Tests.ps1
-
-+ PyTests should be installed by
-
-+ Pytests can be run by
-
-# Currently Supported Benchmarks
-
-* CPU-Z
-* Cinebench
-* CrystalDiskMark
-* Geekbench
-* PyTorch (custom benchmark)
-
-# Design Principles
-
-* Steps are separated into separate scripts that strive for idempotency
+* Steps are separated into separate scripts that each strive for idempotency
+* Per tool customization is all specified in the config.json file
+  leaving scripts to mostly be loops over the benchmark specified in
+  the config file
 * Execution and parsing are separated
 * Raw logs are archived after parsing
 * Scripts fail gracefully and verify success
-* Future CLI summaries will visualize trends
+* Scripts are designed to be idempotent, running them multiple times is fine
 * Parsers may use regex or custom Python
-* Powershell tests can use pester (or similar)
-* Python tests can use pytest (or similar)
+* Powershell tests use Pester
+* Python tests use pytest
+* This README is authoritative and kept up to date and notes
+  design decisions, status, and tasks in progress
 
-# Documentation
+#### Embedded Documentation
 
-* Documentation related to usage, functionality or algorithm is
-  embedded directly in scripts where possible
+Documentation related to usage, functionality or algorithm is embedded
+directly in scripts where possible.
 
-* This README should have a major section labled Derived which
-  contains locations to collect proposed derived Guidelines,
-  Requirements and Specifications if otherwise unsure of where in the
-  document to place them
+### Testing
 
-# Derived
+Tests are implemented using Pester for PowerShell and pytest for
+Python scripts.
 
-## Guidelines
-## Requirements
-## Specifications
+To run Pester tests:
+```powershell
+Invoke-Pester -Path .\tests\Tests.ps1
+```
 
+To run Python tests:
+```powershell
+& $env:WINPYTHON -m pytest .\tests\python_tests\
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. [Placeholder]
+
+### Getting Help
+
+If you encounter issues not covered here, please:
+1. Check the existing issues in the Issues section below
+2. Look for error messages in the logs/ directory
+3. Create a new issue with detailed information about the problem
+
+## TODO
+
+Tasks are placed in three lists: In Progress, Ready,
+Waiting/Blocked. Tasks in the Ready list are roughly ordered in terms
+of priority. Tasks In Progress should have a status message. Tasks in
+Waiting/Blocked should describe what they are waiting on.
+
+### In Progress
+
+### Ready
+
++ Implement `print-config.ps1`
++ Implement `tool-download.ps1`
++ Implement `tool-install.ps1`
++ Implement `tool-cleanup.ps1`
++ Implement `run-benchmarks.ps1`
++ Implement `cleanup-benchmarks.ps1`
++ Implement `cleanup-results.ps1`
++ Create graphical report visualization
++ Implement summary report generation combining all benchmark results
++ Implement comparison feature between benchmark runs
++ Implement system information collection in benchmark results
++ Create documentation for adding custom parsers
++ Add support for additional benchmark tools (3DMark, PassMark)
++ Add scheduling capability for regular benchmark runs
++ Add error handling for users attempting to run admin-required benchmarks
+
+### Waiting/Blocked
+
+
+## ISSUES
+
+Each issue has a status:
+- [O] - Open, needs investigation
+- [I] - Under investigation
+- [W] - Workaround available (described)
+
+### Current Issues
+
+### Resolved Issues
